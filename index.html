@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Training">
+<title>Training Dashboard</title>
+<style>
+  :root {
+    --bg:#ffffff;--bg2:#f5f5f3;--bg3:#eeede9;
+    --text:#1a1a18;--text2:#6b6b67;--text3:#9a9a96;
+    --border:rgba(0,0,0,0.1);--border2:rgba(0,0,0,0.18);
+    --blue:#378ADD;--green:#639922;--amber:#EF9F27;--gray:#888780;
+    --radius:10px;--radius-lg:14px;
+  }
+  @media(prefers-color-scheme:dark){
+    :root{--bg:#1c1c1e;--bg2:#2c2c2e;--bg3:#3a3a3c;--text:#f2f2f0;--text2:#aeaead;--text3:#6e6e6c;--border:rgba(255,255,255,0.1);--border2:rgba(255,255,255,0.2);}
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;background:var(--bg);color:var(--text);font-size:15px;}
+  .header{padding:52px 16px 12px;background:var(--bg);border-bottom:0.5px solid var(--border);position:sticky;top:0;z-index:100;}
+  .header h1{font-size:20px;font-weight:600;letter-spacing:-0.3px;}
+  .header p{font-size:12px;color:var(--text2);margin-top:2px;}
+  .tab-bar{display:flex;background:var(--bg);border-bottom:0.5px solid var(--border);overflow-x:auto;scrollbar-width:none;}
+  .tab-bar::-webkit-scrollbar{display:none;}
+  .tab{flex:1;min-width:72px;padding:10px 4px;font-size:12px;font-weight:500;color:var(--text2);border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;}
+  .tab.active{color:var(--text);border-bottom:2px solid var(--text);}
+  .section{display:none;padding:16px;padding-bottom:80px;}
+  .section.active{display:block;}
+  .metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+  .metric{background:var(--bg2);border-radius:var(--radius);padding:12px 14px;}
+  .metric-label{font-size:11px;color:var(--text2);margin-bottom:3px;font-weight:500;text-transform:uppercase;letter-spacing:0.3px;}
+  .metric-value{font-size:24px;font-weight:600;letter-spacing:-0.5px;}
+  .metric-sub{font-size:11px;color:var(--text3);margin-top:2px;}
+  .card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:14px;margin-bottom:12px;}
+  .card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .card-title{font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.4px;}
+  .chart-wrap{position:relative;width:100%;}
+  .field{margin-bottom:12px;}
+  .field label{display:block;font-size:13px;color:var(--text2);margin-bottom:5px;font-weight:500;}
+  .field input,.field select{width:100%;padding:11px 12px;font-size:15px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg2);color:var(--text);-webkit-appearance:none;font-family:inherit;}
+  .field input:focus,.field select:focus{outline:none;border-color:var(--blue);}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+  .toggle-group{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;}
+  .toggle-btn{padding:8px 12px;font-size:13px;border:0.5px solid var(--border2);border-radius:100px;background:none;color:var(--text2);cursor:pointer;font-family:inherit;}
+  .toggle-btn.selected{background:var(--text);color:var(--bg);border-color:var(--text);}
+  .pill-toggle{display:flex;gap:4px;}
+  .pill-toggle button{padding:4px 10px;font-size:11px;font-weight:600;border:0.5px solid var(--border2);border-radius:100px;background:none;color:var(--text2);cursor:pointer;font-family:inherit;}
+  .pill-toggle button.active{background:var(--text);color:var(--bg);border-color:var(--text);}
+  .submit-btn{width:100%;padding:14px;font-size:16px;font-weight:600;border:none;border-radius:var(--radius-lg);background:var(--text);color:var(--bg);cursor:pointer;margin-top:8px;letter-spacing:-0.2px;}
+  .section-label{font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px;}
+  .badge{display:inline-block;padding:3px 9px;border-radius:100px;font-size:11px;font-weight:600;}
+  .badge-lift{background:#EAF3DE;color:#3B6D11;}
+  .badge-run{background:#E6F1FB;color:#185FA5;}
+  .badge-rest{background:#F1EFE8;color:#5F5E5A;}
+  .badge-other{background:#FAEEDA;color:#854F0B;}
+  @media(prefers-color-scheme:dark){
+    .badge-lift{background:#1e3a0a;color:#97C459;}
+    .badge-run{background:#0a2a4a;color:#85B7EB;}
+    .badge-rest{background:#2c2c2a;color:#B4B2A9;}
+    .badge-other{background:#3a2800;color:#FAC775;}
+  }
+  .insight-card{padding:12px 0;border-bottom:0.5px solid var(--border);}
+  .insight-card:last-child{border-bottom:none;}
+  .pill{display:inline-flex;align-items:center;padding:3px 10px;border-radius:100px;font-size:11px;font-weight:600;margin-bottom:5px;}
+  .pill-good{background:#EAF3DE;color:#3B6D11;}
+  .pill-warn{background:#FAEEDA;color:#854F0B;}
+  .pill-bad{background:#FCEBEB;color:#A32D2D;}
+  @media(prefers-color-scheme:dark){
+    .pill-good{background:#1e3a0a;color:#97C459;}
+    .pill-warn{background:#3a2800;color:#FAC775;}
+    .pill-bad{background:#3a0a0a;color:#F09595;}
+  }
+  .insight-text{font-size:13px;color:var(--text);line-height:1.5;}
+  .progress-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .progress-label{font-size:13px;color:var(--text);width:70px;flex-shrink:0;}
+  .progress-track{flex:1;height:8px;background:var(--bg2);border-radius:100px;overflow:hidden;}
+  .progress-fill{height:100%;border-radius:100px;}
+  .progress-val{font-size:13px;font-weight:600;color:var(--text);width:56px;text-align:right;flex-shrink:0;}
+  .history-item{padding:12px 0;border-bottom:0.5px solid var(--border);}
+  .history-item:last-child{border-bottom:none;}
+  .history-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;}
+  .history-date{font-size:13px;font-weight:600;}
+  .history-detail{font-size:12px;color:var(--text2);line-height:1.5;}
+  .macros-bar{display:flex;height:10px;border-radius:100px;overflow:hidden;gap:2px;margin:8px 0;}
+  .macro-seg{border-radius:100px;}
+  .macro-legend{display:flex;gap:14px;font-size:11px;color:var(--text2);}
+  .macro-dot{width:8px;height:8px;border-radius:2px;display:inline-block;margin-right:4px;}
+  .feedback{margin-top:10px;font-size:13px;padding:10px 12px;border-radius:var(--radius);display:none;}
+  .feedback.ok{background:#EAF3DE;color:#3B6D11;}
+  .feedback.err{background:#FCEBEB;color:#A32D2D;}
+  .target-box{background:var(--bg2);border-radius:var(--radius);padding:12px 14px;margin-bottom:12px;}
+  .target-box p{font-size:13px;color:var(--text);line-height:1.6;}
+  .ai-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#639922;margin-right:6px;}
+  .chart-legend{display:flex;gap:16px;margin-top:10px;font-size:11px;color:var(--text2);}
+  .chart-legend span{display:flex;align-items:center;gap:4px;}
+  .cleg-dot{width:10px;height:10px;border-radius:2px;}
+  /* Mode toggle (today / missed day) */
+  .mode-toggle{display:flex;background:var(--bg2);border-radius:var(--radius);padding:3px;margin-bottom:16px;gap:3px;}
+  .mode-toggle button{flex:1;padding:8px 6px;font-size:13px;font-weight:500;border:none;border-radius:8px;background:none;color:var(--text2);cursor:pointer;font-family:inherit;}
+  .mode-toggle button.active{background:var(--bg);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,0.12);}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Training Dashboard</h1>
+  <p>Stronglifts 5x5 · Half marathon prep · Slow cut</p>
+</div>
+
+<div class="tab-bar">
+  <button class="tab active" onclick="switchTab('overview',this)">Overview</button>
+  <button class="tab" onclick="switchTab('log',this)">Log entry</button>
+  <button class="tab" onclick="switchTab('history',this)">History</button>
+  <button class="tab" onclick="switchTab('coach',this)">Coach</button>
+</div>
+
+<!-- OVERVIEW -->
+<div id="tab-overview" class="section active">
+  <div class="metric-grid">
+    <div class="metric"><div class="metric-label">Weight</div><div class="metric-value">84.5 kg</div><div class="metric-sub">↓ 0.3 kg this week</div></div>
+    <div class="metric"><div class="metric-label">Avg calories</div><div class="metric-value">2,414</div><div class="metric-sub">7-day average</div></div>
+    <div class="metric"><div class="metric-label">Squat</div><div class="metric-value">67.5 kg</div><div class="metric-sub">↑ 7.5 kg / 10 days</div></div>
+    <div class="metric"><div class="metric-label">Runs</div><div class="metric-value">3</div><div class="metric-sub">this week · on track</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Weight (kg)</div>
+      <div class="pill-toggle">
+        <button class="active" onclick="setWeightView('daily',this)">Daily</button>
+        <button onclick="setWeightView('weekly',this)">Weekly avg</button>
+      </div>
+    </div>
+    <div class="chart-wrap" style="height:150px"><canvas id="weightChart"></canvas></div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Lift progression (kg)</div>
+      <div class="pill-toggle">
+        <button class="active" onclick="setLiftView('daily',this)">Daily</button>
+        <button onclick="setLiftView('weekly',this)">Weekly avg</button>
+      </div>
+    </div>
+    <div class="chart-wrap" style="height:150px"><canvas id="liftChart"></canvas></div>
+    <div class="chart-legend">
+      <span><span class="cleg-dot" style="background:#378ADD"></span>Squat</span>
+      <span><span class="cleg-dot" style="background:#EF9F27"></span>Deadlift</span>
+      <span><span class="cleg-dot" style="background:#639922"></span>Bench</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Run distance (km)</div>
+      <div class="pill-toggle">
+        <button class="active" onclick="setRunView('daily',this)">Per run</button>
+        <button onclick="setRunView('weekly',this)">Weekly total</button>
+      </div>
+    </div>
+    <div class="chart-wrap" style="height:150px"><canvas id="runChart"></canvas></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Avg macros (7-day)</div>
+    <div class="macros-bar">
+      <div class="macro-seg" style="flex:155;background:#378ADD;"></div>
+      <div class="macro-seg" style="flex:218;background:#639922;"></div>
+      <div class="macro-seg" style="flex:88;background:#EF9F27;"></div>
+    </div>
+    <div class="macro-legend">
+      <span><span class="macro-dot" style="background:#378ADD;"></span>Protein 155g</span>
+      <span><span class="macro-dot" style="background:#639922;"></span>Carbs 218g</span>
+      <span><span class="macro-dot" style="background:#EF9F27;"></span>Fat 88g</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="ai-dot"></span>This week's snapshot</div>
+    <div class="insight-card"><div class="pill pill-good">strength</div><div class="insight-text">Squat up 7.5 kg in 10 days — no sign of stall. Pre/post carbs are working exactly as intended.</div></div>
+    <div class="insight-card"><div class="pill pill-warn">calories</div><div class="insight-text">Wide variance (2,100–2,700 kcal). On lift days you may be under-eating — target 2,500 on SL5x5 days.</div></div>
+    <div class="insight-card"><div class="pill pill-warn">sleep</div><div class="insight-text">Averaging ~6 hrs. This is your #1 plateau risk — bigger than diet. Sleep is when you get stronger.</div></div>
+    <div class="insight-card"><div class="pill pill-good">running</div><div class="insight-text">3 runs, good variety. HM pace on track — protect legs 48 hrs before heavy squat/deadlift days.</div></div>
+  </div>
+</div>
+
+<!-- LOG ENTRY -->
+<div id="tab-log" class="section">
+  <div class="card">
+    <div class="card-title">New entry</div>
+
+    <div class="mode-toggle">
+      <button class="active" onclick="setLogMode('today',this)">Today</button>
+      <button onclick="setLogMode('missed',this)">Missed day</button>
+    </div>
+
+    <div id="today-label" style="font-size:13px;color:var(--text2);margin-bottom:14px;"></div>
+    <div class="field" id="date-field" style="display:none;">
+      <label>Which date?</label>
+      <input type="date" id="f-date">
+    </div>
+
+    <div class="field" style="margin-bottom:12px;">
+      <label>Bodyweight (kg)</label>
+      <input type="number" id="f-bw" placeholder="84.2" step="0.1">
+    </div>
+
+    <div class="section-label">Workout type</div>
+    <div class="toggle-group" id="workout-group">
+      <button class="toggle-btn" onclick="selectWorkout(this,'stronglifts')">Stronglifts</button>
+      <button class="toggle-btn" onclick="selectWorkout(this,'run')">Easy run</button>
+      <button class="toggle-btn" onclick="selectWorkout(this,'fartlek')">Fartlek</button>
+      <button class="toggle-btn" onclick="selectWorkout(this,'long-run')">Long run</button>
+      <button class="toggle-btn" onclick="selectWorkout(this,'splits')">Splits</button>
+      <button class="toggle-btn" onclick="selectWorkout(this,'rest')">Rest</button>
+    </div>
+
+    <div id="lift-fields" style="display:none;">
+      <div class="section-label">Lifts (kg)</div>
+      <div class="grid3">
+        <div class="field"><label>Squat</label><input type="number" id="f-squat" placeholder="kg" step="2.5"></div>
+        <div class="field"><label>Bench</label><input type="number" id="f-bench" placeholder="kg" step="2.5"></div>
+        <div class="field"><label>Deadlift</label><input type="number" id="f-dl" placeholder="kg" step="2.5"></div>
+      </div>
+    </div>
+
+    <div id="run-fields" style="display:none;">
+      <div class="section-label">Run details</div>
+      <div class="grid2">
+        <div class="field"><label>Distance (km)</label><input type="number" id="f-dist" placeholder="6.5" step="0.1"></div>
+        <div class="field"><label>Time (mm:ss)</label><input type="text" id="f-time" placeholder="35:22"></div>
+      </div>
+      <div class="field"><label>Effort</label>
+        <select id="f-effort"><option>1/5</option><option>2/5</option><option selected>3/5</option><option>4/5</option><option>5/5</option></select>
+      </div>
+    </div>
+
+    <div class="section-label">Nutrition</div>
+    <div class="grid2">
+      <div class="field"><label>Calories</label><input type="number" id="f-cals" placeholder="2500"></div>
+      <div class="field"><label>Protein (g)</label><input type="number" id="f-protein" placeholder="170"></div>
+    </div>
+    <div class="grid2">
+      <div class="field"><label>Carbs (g)</label><input type="number" id="f-carbs" placeholder="240"></div>
+      <div class="field"><label>Fat (g)</label><input type="number" id="f-fat" placeholder="85"></div>
+    </div>
+
+    <div class="section-label">Pre-workout fuel</div>
+    <div class="toggle-group" id="fuel-group">
+      <button class="toggle-btn" onclick="selectToggle(this,'fuel-group')">Banana + whey</button>
+      <button class="toggle-btn" onclick="selectToggle(this,'fuel-group')">Banana only</button>
+      <button class="toggle-btn" onclick="selectToggle(this,'fuel-group')">Whey only</button>
+      <button class="toggle-btn" onclick="selectToggle(this,'fuel-group')">Full meal</button>
+      <button class="toggle-btn" onclick="selectToggle(this,'fuel-group')">None</button>
+    </div>
+
+    <div class="grid2">
+      <div class="field"><label>Sleep</label><input type="text" id="f-sleep" placeholder="7hrs 15min"></div>
+      <div class="field"><label>Energy (1–5)</label>
+        <select id="f-energy"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option></select>
+      </div>
+    </div>
+    <div class="field"><label>Notes</label><input type="text" id="f-notes" placeholder="How did it feel?"></div>
+
+    <button class="submit-btn" onclick="submitLog()">Save entry</button>
+    <div class="feedback" id="log-feedback"></div>
+  </div>
+
+  <div id="macro-target-box" class="target-box" style="display:none;">
+    <div class="section-label"><span class="ai-dot"></span>Macro targets</div>
+    <p id="macro-target-text"></p>
+  </div>
+</div>
+
+<!-- HISTORY -->
+<div id="tab-history" class="section">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Strength trend</div>
+      <div class="pill-toggle">
+        <button class="active" onclick="setHistLiftView('daily',this)">Daily</button>
+        <button onclick="setHistLiftView('weekly',this)">Weekly avg</button>
+      </div>
+    </div>
+    <div class="chart-wrap" style="height:180px"><canvas id="histLiftChart"></canvas></div>
+    <div class="chart-legend">
+      <span><span class="cleg-dot" style="background:#378ADD"></span>Squat</span>
+      <span><span class="cleg-dot" style="background:#EF9F27"></span>Deadlift</span>
+      <span><span class="cleg-dot" style="background:#639922"></span>Bench</span>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Log entries</div>
+    <div id="history-list"></div>
+  </div>
+</div>
+
+<!-- COACH -->
+<div id="tab-coach" class="section">
+  <div class="card">
+    <div class="card-title"><span class="ai-dot"></span>Calorie targets by day type</div>
+    <div class="progress-row"><div class="progress-label">Lift day</div><div class="progress-track"><div class="progress-fill" style="width:83%;background:#378ADD;"></div></div><div class="progress-val">2,500</div></div>
+    <div class="progress-row"><div class="progress-label">Easy run</div><div class="progress-track"><div class="progress-fill" style="width:73%;background:#639922;"></div></div><div class="progress-val">2,200</div></div>
+    <div class="progress-row"><div class="progress-label">Long run</div><div class="progress-track"><div class="progress-fill" style="width:87%;background:#EF9F27;"></div></div><div class="progress-val">2,600</div></div>
+    <div class="progress-row"><div class="progress-label">Rest day</div><div class="progress-track"><div class="progress-fill" style="width:65%;background:#888780;"></div></div><div class="progress-val">2,050</div></div>
+    <p style="font-size:11px;color:var(--text3);margin-top:4px;">Maintenance ~2,700. Avg deficit ~250/day = ~0.5 kg/month.</p>
+  </div>
+  <div class="card">
+    <div class="card-title"><span class="ai-dot"></span>Carb timing (your key lever)</div>
+    <div class="insight-card"><div style="font-weight:600;font-size:13px;margin-bottom:4px;">Pre-workout (45–60 min before)</div><div class="insight-text">30–50g fast carbs. Banana + whey is perfect — primes glycogen without bloat.</div></div>
+    <div class="insight-card"><div style="font-weight:600;font-size:13px;margin-bottom:4px;">Post-workout (within 30 min)</div><div class="insight-text">50–80g carbs + 35–40g protein. Rice/oats + whey or Greek yogurt + fruit. Don't skip this window.</div></div>
+    <div class="insight-card"><div style="font-weight:600;font-size:13px;margin-bottom:4px;">Rest of day</div><div class="insight-text">Lean protein + veg + moderate fat. Keep carbs low — no workout to burn them.</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span class="ai-dot"></span>Plateau prevention</div>
+    <div class="insight-card"><div style="font-weight:600;font-size:13px;margin-bottom:4px;">Early warning signs</div><div class="insight-text">Energy 2/5 for 2+ days. Sleep under 6 hrs for 3+ nights. Squat stalls 2 consecutive sessions.</div></div>
+    <div class="insight-card"><div style="font-weight:600;font-size:13px;margin-bottom:4px;">Response protocol</div><div class="insight-text">Don't deload immediately. Add 200–300 kcal (mainly carbs) on next two training days and retry.</div></div>
+    <div class="insight-card"><div style="font-weight:600;font-size:13px;margin-bottom:4px;">Running interference</div><div class="insight-text">Schedule long runs 48+ hrs before your hardest lift day. Tired legs kill squat depth.</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span class="ai-dot"></span>HM plan (12 weeks)</div>
+    <div class="insight-card"><div style="font-weight:600;font-size:13px;margin-bottom:4px;">Weeks 1–4 · Base</div><div class="insight-text">3 runs/week — 1 easy 5k, 1 fartlek/tempo, 1 long run (8–12 km). Keep long run conversational pace.</div></div>
+    <div class="insight-card"><div style="font-weight:600;font-size:13px;margin-bottom:4px;">Weeks 5–8 · Build</div><div class="insight-text">Long run to 14–16 km. Add 400m/800m splits for pace. Watch for fatigue overlap with squat days.</div></div>
+    <div class="insight-card"><div style="font-weight:600;font-size:13px;margin-bottom:4px;">Weeks 9–11 · Peak</div><div class="insight-text">Long run 18–20 km. Reduce SL5x5 to 2x/week. Increase carbs on long run days.</div></div>
+    <div class="insight-card"><div style="font-weight:600;font-size:13px;margin-bottom:4px;">Week 12 · Taper</div><div class="insight-text">Short runs only. Rest, eat well, trust the process.</div></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const STORAGE_KEY='training_entries_v1';
+const seedData=[
+  {date:'2026-03-23',bw:null,cals:2100,protein:130,carbs:180,fat:80,type:'run',squat:null,bench:null,dl:null,dist:5.66,time:'',effort:'3/5',sleep:'5hr 43min',energy:3,notes:''},
+  {date:'2026-03-24',bw:null,cals:2700,protein:130,carbs:290,fat:120,type:'stronglifts',squat:60,bench:null,dl:75,dist:null,time:null,effort:null,sleep:'5hr 59min',energy:3,notes:'felt really full after lunch'},
+  {date:'2026-03-25',bw:83.8,cals:2200,protein:160,carbs:160,fat:100,type:'fartlek',squat:null,bench:null,dl:null,dist:5.52,time:'',effort:'3/5',sleep:'6hr 31min',energy:3,notes:''},
+  {date:'2026-03-26',bw:83.65,cals:2500,protein:180,carbs:240,fat:90,type:'stronglifts',squat:65,bench:45,dl:null,dist:null,time:null,effort:null,sleep:'6hr 56min',energy:3,notes:'Bit of an odd day'},
+  {date:'2026-03-27',bw:null,cals:2550,protein:120,carbs:200,fat:105,type:'other',squat:null,bench:null,dl:null,dist:null,time:null,effort:null,sleep:'6hr 46min',energy:3,notes:'weighted vest walk 9k'},
+  {date:'2026-03-28',bw:84.7,cals:2500,protein:130,carbs:260,fat:110,type:'stronglifts',squat:65,bench:null,dl:80,dist:null,time:null,effort:null,sleep:'5hr 44min',energy:4,notes:''},
+  {date:'2026-03-29',bw:83.7,cals:2700,protein:160,carbs:240,fat:95,type:'long-run',squat:null,bench:null,dl:null,dist:7.06,time:'',effort:'4/5',sleep:'6hr 40min',energy:2,notes:''},
+  {date:'2026-03-30',bw:85,cals:2300,protein:170,carbs:200,fat:60,type:'rest',squat:null,bench:null,dl:null,dist:null,time:null,effort:null,sleep:'6hr 30min',energy:2,notes:''},
+  {date:'2026-03-31',bw:84.3,cals:2500,protein:155,carbs:240,fat:75,type:'stronglifts',squat:67.5,bench:47.5,dl:null,dist:null,time:null,effort:null,sleep:'6hr 11min',energy:3,notes:''},
+  {date:'2026-04-01',bw:83.3,cals:2100,protein:160,carbs:200,fat:50,type:'splits',squat:null,bench:null,dl:null,dist:6.21,time:'',effort:'3/5',sleep:'5hr 54min',energy:3,notes:'Good day of food'},
+  {date:'2026-04-02',bw:84.5,cals:null,protein:null,carbs:null,fat:null,type:'stronglifts',squat:67.5,bench:null,dl:85,dist:null,time:null,effort:null,sleep:'6hr 39min',energy:4,notes:''},
+];
+
+function loadEntries(){try{const s=localStorage.getItem(STORAGE_KEY);if(s)return JSON.parse(s);}catch(e){}localStorage.setItem(STORAGE_KEY,JSON.stringify(seedData));return seedData;}
+function saveEntries(e){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(e));}catch(e){}}
+
+let entries=loadEntries();
+let selectedWorkout='';
+let logMode='today';
+const charts={};
+
+function destroyChart(id){if(charts[id]){charts[id].destroy();delete charts[id];}}
+
+function switchTab(id,btn){
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-'+id).classList.add('active');
+  if(id==='history')renderHistory();
+}
+
+function setLogMode(mode,btn){
+  logMode=mode;
+  btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const df=document.getElementById('date-field');
+  const tl=document.getElementById('today-label');
+  if(mode==='today'){
+    df.style.display='none';
+    const d=new Date();
+    tl.textContent='Logging for '+d.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});
+  } else {
+    df.style.display='block';
+    tl.textContent='';
+  }
+}
+
+function selectWorkout(btn,type){
+  document.getElementById('workout-group').querySelectorAll('.toggle-btn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+  selectedWorkout=type;
+  document.getElementById('lift-fields').style.display=type==='stronglifts'?'block':'none';
+  document.getElementById('run-fields').style.display=['run','fartlek','long-run','splits'].includes(type)?'block':'none';
+  const guides={
+    stronglifts:'Lift day: <strong>2,500 kcal · 175g protein · 240g carbs · 85g fat</strong>. Prioritise pre-workout carbs and a post-workout meal within 30 min.',
+    run:'Easy run: <strong>2,200 kcal · 150g protein · 200g carbs · 80g fat</strong>. Lighter carb load — aerobic work needs less glycogen.',
+    fartlek:'Fartlek: <strong>2,350 kcal · 155g protein · 220g carbs · 80g fat</strong>. More intense — a few extra carbs pre-run.',
+    'long-run':'Long run: <strong>2,600 kcal · 160g protein · 260g carbs · 85g fat</strong>. Highest calorie day. Carb up the evening before too.',
+    splits:'Intervals: <strong>2,400 kcal · 160g protein · 230g carbs · 80g fat</strong>. High intensity = high carb need.',
+    rest:'Rest day: <strong>2,050 kcal · 145g protein · 160g carbs · 80g fat</strong>. Lowest calorie day. Keep carbs low.',
+  };
+  const box=document.getElementById('macro-target-box');
+  if(guides[type]){document.getElementById('macro-target-text').innerHTML=guides[type];box.style.display='block';}
+  else box.style.display='none';
+}
+
+function selectToggle(btn,groupId){
+  document.getElementById(groupId).querySelectorAll('.toggle-btn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+function submitLog(){
+  const fb=document.getElementById('log-feedback');
+  if(!selectedWorkout){fb.textContent='Please select a workout type first.';fb.className='feedback err';fb.style.display='block';return;}
+  let dateVal;
+  if(logMode==='today'){
+    dateVal=new Date().toISOString().split('T')[0];
+  } else {
+    dateVal=document.getElementById('f-date').value;
+    if(!dateVal){fb.textContent='Please select the date for this entry.';fb.className='feedback err';fb.style.display='block';return;}
+  }
+  const entry={
+    date:dateVal,
+    bw:document.getElementById('f-bw').value?parseFloat(document.getElementById('f-bw').value):null,
+    cals:document.getElementById('f-cals').value?parseInt(document.getElementById('f-cals').value):null,
+    protein:document.getElementById('f-protein').value?parseInt(document.getElementById('f-protein').value):null,
+    carbs:document.getElementById('f-carbs').value?parseInt(document.getElementById('f-carbs').value):null,
+    fat:document.getElementById('f-fat').value?parseInt(document.getElementById('f-fat').value):null,
+    type:selectedWorkout,
+    squat:document.getElementById('f-squat').value?parseFloat(document.getElementById('f-squat').value):null,
+    bench:document.getElementById('f-bench').value?parseFloat(document.getElementById('f-bench').value):null,
+    dl:document.getElementById('f-dl').value?parseFloat(document.getElementById('f-dl').value):null,
+    dist:document.getElementById('f-dist').value?parseFloat(document.getElementById('f-dist').value):null,
+    time:document.getElementById('f-time').value||null,
+    effort:document.getElementById('f-effort').value||null,
+    sleep:document.getElementById('f-sleep').value||null,
+    energy:parseInt(document.getElementById('f-energy').value),
+    notes:document.getElementById('f-notes').value||'',
+  };
+  const idx=entries.findIndex(e=>e.date===entry.date);
+  if(idx>=0)entries[idx]=entry;else entries.push(entry);
+  entries.sort((a,b)=>a.date.localeCompare(b.date));
+  saveEntries(entries);
+  fb.textContent=logMode==='missed'?'Entry saved for '+fmtDate(dateVal)+'!':'Entry saved!';
+  fb.className='feedback ok';fb.style.display='block';
+  setTimeout(()=>{fb.style.display='none';},2500);
+  buildWeightChart(weightView);
+  buildLiftChart(liftView);
+  buildRunChart(runView);
+}
+
+function fmtDate(d){
+  const mo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const p=d.split('-');return parseInt(p[2])+' '+mo[parseInt(p[1])-1];
+}
+function getWeekKey(dateStr){
+  const d=new Date(dateStr);const day=d.getDay()||7;d.setDate(d.getDate()-day+1);return d.toISOString().split('T')[0];
+}
+function fmtWeek(wk){
+  const mo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const d=new Date(wk);return 'w/'+parseInt(d.getDate())+' '+mo[d.getMonth()];
+}
+
+function weeklyWeights(){
+  const map={};
+  entries.filter(e=>e.bw).forEach(e=>{const wk=getWeekKey(e.date);if(!map[wk])map[wk]=[];map[wk].push(e.bw);});
+  return Object.keys(map).sort().map(wk=>({label:fmtWeek(wk),value:parseFloat((map[wk].reduce((a,b)=>a+b,0)/map[wk].length).toFixed(1))}));
+}
+function weeklyLifts(){
+  const map={};
+  entries.filter(e=>e.type==='stronglifts').forEach(e=>{
+    const wk=getWeekKey(e.date);
+    if(!map[wk])map[wk]={sq:[],bn:[],dl:[]};
+    if(e.squat)map[wk].sq.push(e.squat);
+    if(e.bench)map[wk].bn.push(e.bench);
+    if(e.dl)map[wk].dl.push(e.dl);
+  });
+  const avg=a=>a.length?parseFloat((a.reduce((x,y)=>x+y,0)/a.length).toFixed(1)):null;
+  return Object.keys(map).sort().map(wk=>({label:fmtWeek(wk),squat:avg(map[wk].sq),bench:avg(map[wk].bn),dl:avg(map[wk].dl)}));
+}
+function weeklyRuns(){
+  const map={};const rt=['run','fartlek','long-run','splits'];
+  entries.filter(e=>rt.includes(e.type)&&e.dist).forEach(e=>{const wk=getWeekKey(e.date);if(!map[wk])map[wk]=0;map[wk]+=e.dist;});
+  return Object.keys(map).sort().map(wk=>({label:fmtWeek(wk),value:parseFloat(map[wk].toFixed(1))}));
+}
+
+let weightView='daily';
+function setWeightView(v,btn){weightView=v;btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('active'));btn.classList.add('active');buildWeightChart(v);}
+function buildWeightChart(v){
+  destroyChart('weightChart');
+  let labels,data;
+  if(v==='daily'){const d=entries.filter(e=>e.bw);labels=d.map(e=>fmtDate(e.date));data=d.map(e=>e.bw);}
+  else{const w=weeklyWeights();labels=w.map(x=>x.label);data=w.map(x=>x.value);}
+  const vals=data.filter(Boolean);
+  const yMin=vals.length?Math.floor(Math.min(...vals)-0.5):82;
+  const yMax=vals.length?Math.ceil(Math.max(...vals)+0.5):86;
+  charts['weightChart']=new Chart(document.getElementById('weightChart'),{
+    type:'line',data:{labels,datasets:[{data,borderColor:'#378ADD',backgroundColor:'rgba(55,138,221,0.1)',fill:true,tension:0.4,pointRadius:3}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{min:yMin,max:yMax,ticks:{color:'#888'},grid:{color:'rgba(128,128,128,0.1)'}},x:{ticks:{color:'#888',maxTicksLimit:6},grid:{display:false}}}}
+  });
+}
+
+let liftView='daily';
+function setLiftView(v,btn){liftView=v;btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('active'));btn.classList.add('active');buildLiftChart(v);}
+function buildLiftChart(v){
+  destroyChart('liftChart');
+  let labels,sq,bn,dl;
+  if(v==='daily'){const d=entries.filter(e=>e.type==='stronglifts');labels=d.map(e=>fmtDate(e.date));sq=d.map(e=>e.squat);bn=d.map(e=>e.bench);dl=d.map(e=>e.dl);}
+  else{const w=weeklyLifts();labels=w.map(x=>x.label);sq=w.map(x=>x.squat);bn=w.map(x=>x.bench);dl=w.map(x=>x.dl);}
+  charts['liftChart']=new Chart(document.getElementById('liftChart'),{
+    type:'line',data:{labels,datasets:[
+      {label:'Squat',data:sq,borderColor:'#378ADD',backgroundColor:'transparent',tension:0.3,pointRadius:4},
+      {label:'Deadlift',data:dl,borderColor:'#EF9F27',backgroundColor:'transparent',tension:0.3,pointRadius:4},
+      {label:'Bench',data:bn,borderColor:'#639922',backgroundColor:'transparent',tension:0.3,pointRadius:4},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:false,ticks:{color:'#888'},grid:{color:'rgba(128,128,128,0.1)'}},x:{ticks:{color:'#888',maxTicksLimit:5},grid:{display:false}}}}
+  });
+}
+
+let runView='daily';
+function setRunView(v,btn){runView=v;btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('active'));btn.classList.add('active');buildRunChart(v);}
+function buildRunChart(v){
+  destroyChart('runChart');
+  let labels,data;const rt=['run','fartlek','long-run','splits'];
+  if(v==='daily'){const d=entries.filter(e=>rt.includes(e.type)&&e.dist);labels=d.map(e=>fmtDate(e.date));data=d.map(e=>e.dist);}
+  else{const w=weeklyRuns();labels=w.map(x=>x.label);data=w.map(x=>x.value);}
+  charts['runChart']=new Chart(document.getElementById('runChart'),{
+    type:'bar',data:{labels,datasets:[{data,backgroundColor:'rgba(55,138,221,0.7)',borderColor:'#378ADD',borderWidth:1,borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{color:'#888',callback:v=>v+'km'},grid:{color:'rgba(128,128,128,0.1)'}},x:{ticks:{color:'#888',maxTicksLimit:8,autoSkip:false,maxRotation:45},grid:{display:false}}}}
+  });
+}
+
+let histLiftView='daily';
+function setHistLiftView(v,btn){histLiftView=v;btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('active'));btn.classList.add('active');buildHistLiftChart(v);}
+function buildHistLiftChart(v){
+  destroyChart('histLiftChart');
+  let labels,sq,bn,dl;
+  if(v==='daily'){const d=entries.filter(e=>e.type==='stronglifts'&&(e.squat||e.dl||e.bench));labels=d.map(e=>fmtDate(e.date));sq=d.map(e=>e.squat);bn=d.map(e=>e.bench);dl=d.map(e=>e.dl);}
+  else{const w=weeklyLifts();labels=w.map(x=>x.label);sq=w.map(x=>x.squat);bn=w.map(x=>x.bench);dl=w.map(x=>x.dl);}
+  charts['histLiftChart']=new Chart(document.getElementById('histLiftChart'),{
+    type:'line',data:{labels,datasets:[
+      {label:'Squat',data:sq,borderColor:'#378ADD',backgroundColor:'transparent',tension:0.3,pointRadius:4},
+      {label:'Deadlift',data:dl,borderColor:'#EF9F27',backgroundColor:'transparent',tension:0.3,pointRadius:4},
+      {label:'Bench',data:bn,borderColor:'#639922',backgroundColor:'transparent',tension:0.3,pointRadius:4},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:false,ticks:{color:'#888'},grid:{color:'rgba(128,128,128,0.1)'}},x:{ticks:{color:'#888',maxTicksLimit:6},grid:{display:false}}}}
+  });
+}
+
+function workoutBadge(type){
+  const map={stronglifts:['lift','Lift'],run:['run','Run'],fartlek:['run','Fartlek'],'long-run':['run','Long run'],splits:['run','Splits'],rest:['rest','Rest'],other:['other','Other']};
+  const[cls,label]=map[type]||['other',type];
+  return`<span class="badge badge-${cls}">${label}</span>`;
+}
+
+function renderHistory(){
+  const list=document.getElementById('history-list');
+  list.innerHTML=[...entries].reverse().map(e=>{
+    const d=[];
+    if(e.cals)d.push(e.cals.toLocaleString()+' kcal');
+    if(e.protein)d.push(e.protein+'g protein');
+    if(e.squat)d.push('Squat '+e.squat+'kg');
+    if(e.dl)d.push('DL '+e.dl+'kg');
+    if(e.bench)d.push('Bench '+e.bench+'kg');
+    if(e.dist)d.push(e.dist+'km');
+    if(e.bw)d.push(e.bw+'kg bw');
+    if(e.sleep)d.push(e.sleep);
+    return`<div class="history-item"><div class="history-top"><span class="history-date">${fmtDate(e.date)}</span>${workoutBadge(e.type)}</div><div class="history-detail">${d.join(' · ')}${e.notes?' · '+e.notes:''}</div></div>`;
+  }).join('');
+  buildHistLiftChart(histLiftView);
+}
+
+// init
+buildWeightChart('daily');
+buildLiftChart('daily');
+buildRunChart('daily');
+(function(){
+  const d=new Date();
+  document.getElementById('today-label').textContent='Logging for '+d.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});
+  document.getElementById('f-date').value=d.toISOString().split('T')[0];
+})();
+</script>
+</body>
+</html>
